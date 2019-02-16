@@ -20,6 +20,7 @@ package org.apache.samoa.learners.classifiers;
  * #L%
  */
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,11 +71,17 @@ public class NaiveBayes implements LocalLearner {
   protected Map<Integer, Double> classPrototypes;
 
   /**
-   * Retrieve the number of classes currently known to this local model
+   * Retrieve the number of classes
    * 
-   * @return the number of classes currently known to this local model
+   * @return number of classes
    */
   protected int getNumberOfClasses() {
+    if (this.classInstances.isEmpty())
+      return 0;
+    // e.g. when the class "2" is known only, return space for 3 classes
+    int maxClass = Collections.max(this.classInstances.keySet());
+    if (maxClass+1 > this.classInstances.size())
+      return maxClass+1;
     return this.classInstances.size();
   }
 
