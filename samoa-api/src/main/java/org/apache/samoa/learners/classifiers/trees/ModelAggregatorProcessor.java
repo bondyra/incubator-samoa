@@ -43,6 +43,7 @@ import org.apache.samoa.instances.Instances;
 import org.apache.samoa.instances.InstancesHeader;
 import org.apache.samoa.learners.InstanceContent;
 import org.apache.samoa.learners.InstancesContentEvent;
+import org.apache.samoa.learners.ResetContentEvent;
 import org.apache.samoa.learners.ResultContentEvent;
 import org.apache.samoa.moa.classifiers.core.AttributeSplitSuggestion;
 import org.apache.samoa.moa.classifiers.core.driftdetection.ChangeDetector;
@@ -78,7 +79,7 @@ final class ModelAggregatorProcessor implements Processor {
   private int decisionNodeCount;
   private boolean growthAllowed;
 
-  private final Instances dataset;
+  private Instances dataset;
 
   // to support concurrent split
   private long splitId;
@@ -176,6 +177,10 @@ final class ModelAggregatorProcessor implements Processor {
           this.continueAttemptToSplit(activeLearningNode, splittingNodeInfo.foundNode);
         }
       }
+    } else if (event instanceof ResetContentEvent) {
+      this.resetLearning();
+      if (this.changeDetector != null)
+        this.changeDetector.resetLearning();
     }
     return false;
   }
@@ -254,7 +259,7 @@ final class ModelAggregatorProcessor implements Processor {
   private ResultContentEvent newResultContentEvent(double[] prediction, InstanceContent inEvent) {
     ResultContentEvent rce = new ResultContentEvent(inEvent.getInstanceIndex(), inEvent.getInstance(),
         inEvent.getClassId(), prediction, inEvent.isLastEvent());
-    rce.setClassifierIndex(this.processorId);
+    rce.setClassifierIndex(inEvent.getClassifierIndex());
     rce.setEvaluationIndex(inEvent.getEvaluationIndex());
     return rce;
   }
@@ -287,9 +292,9 @@ final class ModelAggregatorProcessor implements Processor {
   private void processInstances(InstancesContentEvent instContentEvent) {
     for (InstanceContent instContent : instContentEvent.getList()) {
       Instance inst = instContent.getInstance();
+      this.dataset = inst.dataset();
       boolean isTesting = instContent.isTesting();
       boolean isTraining = instContent.isTraining();
-      inst.setDataset(this.dataset);
       // Check the instance whether it is used for testing or training
       // boolean testAndTrain = isTraining; //Train after testing
       double[] prediction = null;

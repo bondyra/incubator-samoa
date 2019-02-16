@@ -27,6 +27,7 @@ import org.apache.samoa.instances.Instances;
 import org.apache.samoa.instances.InstancesHeader;
 import org.apache.samoa.learners.InstanceContentEvent;
 import org.apache.samoa.learners.InstancesContentEvent;
+import org.apache.samoa.learners.ResetContentEvent;
 import org.apache.samoa.learners.ResultContentEvent;
 import org.apache.samoa.topology.Stream;
 import org.slf4j.Logger;
@@ -93,6 +94,12 @@ final class FilterProcessor implements Processor {
           }
         }
       }
+    } else if (event instanceof ResetContentEvent){
+      // clear batch
+      this.waitingInstances = 0;
+      this.contentEventList.clear();
+      // pass event to other processors to be handled
+      this.outputStream.put(event);
     }
     return false;
   }
