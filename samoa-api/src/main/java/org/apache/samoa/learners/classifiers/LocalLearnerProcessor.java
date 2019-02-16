@@ -28,6 +28,7 @@ import org.apache.samoa.core.ContentEvent;
 import org.apache.samoa.core.Processor;
 import org.apache.samoa.instances.Instance;
 import org.apache.samoa.learners.InstanceContentEvent;
+import org.apache.samoa.learners.ResetContentEvent;
 import org.apache.samoa.learners.ResultContentEvent;
 import org.apache.samoa.moa.classifiers.core.driftdetection.ChangeDetector;
 import org.apache.samoa.topology.Stream;
@@ -39,7 +40,7 @@ import static org.apache.samoa.moa.core.Utils.maxIndex;
 /**
  * The Class LearnerProcessor.
  */
-final public class LocalLearnerProcessor implements Processor {
+public class LocalLearnerProcessor implements Processor {
 
   /**
 	 * 
@@ -48,7 +49,7 @@ final public class LocalLearnerProcessor implements Processor {
 
   private static final Logger logger = LoggerFactory.getLogger(LocalLearnerProcessor.class);
 
-  private LocalLearner model;
+  protected LocalLearner model;
   private Stream outputStream;
   private int modelId;
   private long instancesCount = 0;
@@ -112,13 +113,7 @@ final public class LocalLearnerProcessor implements Processor {
     this.instancesCount++;
     if (this.changeDetector != null) {
       boolean correctlyClassifies = this.correctlyClassifies(inst);
-      double oldEstimation = this.changeDetector.getEstimation();
-      this.changeDetector.input(correctlyClassifies ? 0 : 1);
-      if (this.changeDetector.getChange() && this.changeDetector.getEstimation() > oldEstimation) {
-        // Start a new classifier
-        this.model.resetLearning();
-        this.changeDetector.resetLearning();
-      }
+      this.updateChangeDetector(correctlyClassifies);
     }
   }
 
@@ -148,31 +143,37 @@ final public class LocalLearnerProcessor implements Processor {
   @Override
   public boolean process(ContentEvent event) {
 
-    InstanceContentEvent inEvent = (InstanceContentEvent) event;
-    Instance instance = inEvent.getInstance();
-
-    if (inEvent.getInstanceIndex() < 0) {
-      // end learning
-      ResultContentEvent outContentEvent = new ResultContentEvent(-1, instance, 0,
-          new double[0], inEvent.isLastEvent());
-      outContentEvent.setClassifierIndex(this.modelId);
-      outContentEvent.setEvaluationIndex(inEvent.getEvaluationIndex());
-      outputStream.put(outContentEvent);
-      return false;
+    if (event instanceof ResetContentEvent){
+      model.resetLearning();
+      instancesCount = 0;
     }
+    else {
+      InstanceContentEvent inEvent = (InstanceContentEvent) event;
+      Instance instance = inEvent.getInstance();
 
-    if (inEvent.isTesting()) {
-      double[] dist = model.getVotesForInstance(instance);
-      ResultContentEvent outContentEvent = new ResultContentEvent(inEvent.getInstanceIndex(),
-          instance, inEvent.getClassId(), dist, inEvent.isLastEvent());
-      outContentEvent.setClassifierIndex(this.modelId);
-      outContentEvent.setEvaluationIndex(inEvent.getEvaluationIndex());
-      logger.trace(inEvent.getInstanceIndex() + " {} {}", modelId, dist);
-      outputStream.put(outContentEvent);
-    }
+      if (inEvent.getInstanceIndex() < 0) {
+        // end learning
+        ResultContentEvent outContentEvent = new ResultContentEvent(-1, instance, 0,
+                new double[0], inEvent.isLastEvent());
+        outContentEvent.setClassifierIndex(inEvent.getClassifierIndex());
+        outContentEvent.setEvaluationIndex(inEvent.getEvaluationIndex());
+        outputStream.put(outContentEvent);
+        return false;
+      }
 
-    if (inEvent.isTraining()) {
-      updateStats(inEvent);
+      if (inEvent.isTesting()) {
+        double[] dist = model.getVotesForInstance(instance);
+        ResultContentEvent outContentEvent = new ResultContentEvent(inEvent.getInstanceIndex(),
+                instance, inEvent.getClassId(), dist, inEvent.isLastEvent());
+        outContentEvent.setClassifierIndex(inEvent.getClassifierIndex());
+        outContentEvent.setEvaluationIndex(inEvent.getEvaluationIndex());
+        logger.trace(inEvent.getInstanceIndex() + " {} {}", modelId, dist);
+        outputStream.put(outContentEvent);
+      }
+
+      if (inEvent.isTraining()) {
+        updateStats(inEvent);
+      }
     }
     return false;
   }
@@ -220,4 +221,13 @@ final public class LocalLearnerProcessor implements Processor {
     this.changeDetector = cd;
   }
 
+  protected void updateChangeDetector(boolean correctlyClassifies){
+    double oldEstimation = this.changeDetector.getEstimation();
+    this.changeDetector.input(correctlyClassifies ? 0 : 1);
+    if (this.changeDetector.getChange() && this.changeDetector.getEstimation() > oldEstimation) {
+      // Start a new classifier
+      this.model.resetLearning();
+      this.changeDetector.resetLearning();
+    }
+  }
 }
