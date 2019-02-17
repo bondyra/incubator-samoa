@@ -41,10 +41,10 @@ public class ShardingDistributorProcessor implements Processor {
   private static final long serialVersionUID = -1550901409625192730L;
 
   /** The ensemble size. */
-  private int ensembleSize;
+  protected int ensembleSize;
 
   /** The stream ensemble. */
-  private Stream[] ensembleStreams;
+  protected Stream[] ensembleStreams;
 
   /** Ramdom number generator. */
   protected Random random = new Random(); //TODO make random seed configurable

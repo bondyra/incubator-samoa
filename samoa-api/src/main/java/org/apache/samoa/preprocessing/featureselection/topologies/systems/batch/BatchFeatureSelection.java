@@ -77,7 +77,7 @@ public class BatchFeatureSelection implements Learner, Configurable {
   // learner integration options
   public ClassOption featureAdaptiveLearnerOption = new ClassOption("FALearner",
       'f', "Type of learner to be integrated with feature selection system", Learner.class,
-      "org.apache.samoa.learners.classifiers.SingleClassifier");
+      "org.apache.samoa.learners.classifiers.ensemble.featureadaptation.DynamicFeatureLearner");
 
   private RankingAggregatorProcessor rankingAggregatorProcessor;
   private Learner learner;

@@ -54,22 +54,29 @@ public class TestParams {
             + "-l (org.apache.samoa.learners.classifiers.trees.VerticalHoeffdingTree -p 4) " +
             "-s (org.apache.samoa.streams.generators.RandomTreeGenerator -c 2 -o 10 -u 10)";
 
-    public final static String PREQEVAL_IFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d "
-            + "-l (org.apache.samoa.preprocessing.featureselection.topologies.systems.incremental.IncrementalFeatureSelection" +
-        "  -f (org.apache.samoa.learners.classifiers.SingleClassifier))" +
-            "-s (org.apache.samoa.streams.generators.HyperplaneGenerator -c 2 -a 30)";
+    public final static String PREQEVAL_IFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d"
+        + " -l (org.apache.samoa.preprocessing.featureselection.topologies.systems.incremental.IncrementalFeatureSelection"
+        + " -f (org.apache.samoa.learners.classifiers.ensemble.featureadaptation.DynamicFeatureLearner"
+        + " -l (org.apache.samoa.learners.classifiers.trees.VerticalHoeffdingTree -w 1)))"
+        + " -s (org.apache.samoa.streams.generators.HyperplaneGenerator -c 2 -a 30)";
 
-      public final static String PREQEVAL_IWFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d "
-              + "-l (org.apache.samoa.preprocessing.featureselection.topologies.systems.incremental.IncrementalWrapperFeatureSelection)" +
-              "-s (org.apache.samoa.streams.generators.HyperplaneGenerator -c 2 -a 30)";
+    public final static String PREQEVAL_IWFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d"
+        + " -l (org.apache.samoa.preprocessing.featureselection.topologies.systems.incremental.IncrementalWrapperFeatureSelection"
+        + " -f (org.apache.samoa.learners.classifiers.ensemble.featureadaptation.DynamicFeatureLearner"
+        + " -l (org.apache.samoa.learners.classifiers.trees.VerticalHoeffdingTree -w 1)))"
+        + " -s (org.apache.samoa.streams.generators.HyperplaneGenerator -c 2 -a 30)";
 
-    public final static String PREQEVAL_BFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d "
-            + "-l (org.apache.samoa.preprocessing.featureselection.topologies.systems.batch.BatchFeatureSelection)" +
-            "-s (org.apache.samoa.streams.generators.RandomTreeGenerator -c 2 -o 10 -u 10)";
+    public final static String PREQEVAL_BFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d"
+        + " -l (org.apache.samoa.preprocessing.featureselection.topologies.systems.batch.BatchFeatureSelection"
+        + " -f (org.apache.samoa.learners.classifiers.ensemble.featureadaptation.DynamicFeatureLearner"
+        + " -l (org.apache.samoa.learners.classifiers.trees.VerticalHoeffdingTree -w 1)))"
+        + " -s (org.apache.samoa.streams.generators.RandomTreeGenerator -c 2 -o 10 -u 10)";
 
-      public final static String PREQEVAL_BWFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d "
-              + "-l (org.apache.samoa.preprocessing.featureselection.topologies.systems.batch.BatchWrapperFeatureSelection)" +
-              "-s (org.apache.samoa.streams.generators.RandomTreeGenerator -c 2 -o 10 -u 10)";
+    public final static String PREQEVAL_BWFS_HYPERPLANE = "PrequentialEvaluation -d %s -i %d -f %d -w %d -g %s -h %d "
+        + " -l (org.apache.samoa.preprocessing.featureselection.topologies.systems.batch.BatchWrapperFeatureSelection"
+        + " -f (org.apache.samoa.learners.classifiers.ensemble.featureadaptation.DynamicFeatureLearner"
+        + " -l (org.apache.samoa.learners.classifiers.trees.VerticalHoeffdingTree -w 1)))"
+        + " -s (org.apache.samoa.streams.generators.RandomTreeGenerator -c 2 -o 10 -u 10)";
 
   }
 

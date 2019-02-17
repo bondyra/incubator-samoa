@@ -1,4 +1,4 @@
-package org.apache.samoa.learners.classifiers.ensemble;
+package org.apache.samoa.learners.classifiers.ensemble.featureadaptation;
 
 /*
  * #%L
@@ -20,65 +20,40 @@ package org.apache.samoa.learners.classifiers.ensemble;
  * #L%
  */
 
-import java.util.Set;
-
-import org.apache.samoa.core.Processor;
-import org.apache.samoa.instances.Instances;
+import com.github.javacliparser.IntOption;
 import org.apache.samoa.learners.Learner;
-import org.apache.samoa.learners.classifiers.trees.VerticalHoeffdingTree;
+import org.apache.samoa.learners.classifiers.ensemble.Sharding;
+import org.apache.samoa.preprocessing.featureselection.ranking.FeatureFilterCreator;
+import org.apache.samoa.preprocessing.featureselection.topologies.common.evaluating.methods.EvaluationMethodCreator;
 import org.apache.samoa.topology.Stream;
-import org.apache.samoa.topology.TopologyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.javacliparser.ClassOption;
-import com.github.javacliparser.Configurable;
-import com.github.javacliparser.IntOption;
-import com.google.common.collect.ImmutableSet;
 
 /**
- * Simple sharding meta-classifier. It trains an ensemble of learners by shuffling the training stream among them, so
- * that each learner is completely independent from each other.
+ * Dynamic Feature Learner algorithm. A variation of standard Bagging algorithm that integrates with feature selection
+ * systems. When new information about relevant features arrives, it resets some of the ensemble members.
  */
-public class Sharding implements Learner, Configurable {
+public class DynamicFeatureLearner extends Sharding {
+  private static final Logger logger = LoggerFactory.getLogger(DynamicFeatureLearner.class);
 
-  private static final long serialVersionUID = -2971850264864952099L;
-  private static final Logger logger = LoggerFactory.getLogger(Sharding.class);
+  public IntOption instanceRandomSeedOption = new IntOption("instanceRandomSeed", 'i',
+      "Seed for random reset process of ensemble members", 1);
 
-  /** The base learner class. */
-  public ClassOption baseLearnerOption = new ClassOption("baseLearner", 'l',
-      "Classifier to train.", Learner.class, VerticalHoeffdingTree.class.getName());
+  public IntOption learnerGracePeriodOption = new IntOption("learnerGracePeriod", 'g',
+      "For how many instances a learner after reset won't be reset again?", 2000);
 
-  /** The ensemble size option. */
-  public IntOption ensembleSizeOption = new IntOption("ensembleSize", 's',
-      "The number of models in the bag.", 10, 1, Integer.MAX_VALUE);
-
-  /** The distributor processor. */
-  protected ShardingDistributorProcessor distributor;
-
-  /** The input streams for the ensemble, one per member. */
-  protected Stream[] ensembleStreams;
-
-  /** The result stream. */
-  protected Stream resultStream;
-
-  /** The dataset. */
-  protected Instances dataset;
-
-  protected Learner[] ensemble;
-
-  /**
-   * Sets the layout.
-   */
+  @Override
   protected void setLayout() {
-
     int ensembleSize = this.ensembleSizeOption.getValue();
 
-    distributor = new ShardingDistributorProcessor();
+    distributor = new DynamicFeatureDistributorProcessor();
     distributor.setEnsembleSize(ensembleSize);
+    ((DynamicFeatureDistributorProcessor) distributor).setFeatureFilterCreator(new FeatureFilterCreator());
     this.builder.addProcessor(distributor, 1);
 
-    // instantiate classifier
+    // instantiate ensemble members
     ensemble = new Learner[ensembleSize];
     for (int i = 0; i < ensembleSize; i++) {
       try {
@@ -92,13 +67,25 @@ public class Sharding implements Learner, Configurable {
       ensemble[i].init(builder, this.dataset, 1); // sequential
     }
 
-    PredictionCombinerProcessor predictionCombiner = new PredictionCombinerProcessor();
+    DynamicFeaturePredictionCombinerProcessor predictionCombiner = new DynamicFeaturePredictionCombinerProcessor();
     predictionCombiner.setEnsembleSize(ensembleSize);
+    EnsembleResetDecider ensembleResetDecider = new EnsembleResetDecider(instanceRandomSeedOption.getValue(),
+        learnerGracePeriodOption.getValue());
+    ensembleResetDecider.setMethodCreator(new EvaluationMethodCreator());
+    predictionCombiner.setEnsembleResetDecider(ensembleResetDecider);
     this.builder.addProcessor(predictionCombiner, 1);
 
     // Streams
     resultStream = this.builder.createStream(predictionCombiner);
     predictionCombiner.setOutputStream(resultStream);
+    // feedback from combiner to distributor
+    Stream distributorStream = this.builder.createStream(predictionCombiner);
+    predictionCombiner.setDistributorStream(distributorStream);
+    this.builder.connectInputAllStream(distributorStream, distributor);
+    // stream to pass selection content events from distributor to combiner
+    Stream selectionStream = this.builder.createStream(distributor);
+    ((DynamicFeatureDistributorProcessor) distributor).setFeatureSelectionStream(selectionStream);
+    this.builder.connectInputAllStream(selectionStream, predictionCombiner);
 
     for (Learner member : ensemble) {
       for (Stream subResultStream : member.getResultStreams()) { // a learner can have multiple output streams
@@ -111,32 +98,7 @@ public class Sharding implements Learner, Configurable {
       ensembleStreams[i] = builder.createStream(distributor);
       builder.connectInputShuffleStream(ensembleStreams[i], ensemble[i].getInputProcessor()); // connect streams one-to-one with ensemble members (the type of connection does not matter)
     }
-    
+
     distributor.setOutputStreams(ensembleStreams);
-  }
-
-  /** The builder. */
-  protected TopologyBuilder builder;
-
-  @Override
-  public void init(TopologyBuilder builder, Instances dataset, int parallelism) {
-    this.builder = builder;
-    this.dataset = dataset;
-    this.setLayout();
-  }
-
-  @Override
-  public Processor getInputProcessor() {
-    return distributor;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see samoa.learners.Learner#getResultStreams()
-   */
-  @Override
-  public Set<Stream> getResultStreams() {
-    return ImmutableSet.of(this.resultStream);
   }
 }

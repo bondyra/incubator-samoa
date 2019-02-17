@@ -23,7 +23,7 @@ package org.apache.samoa.preprocessing.featureselection.topologies.common.evalua
 import org.apache.samoa.instances.Instance;
 
 /**
- * Interface of evaluation method used in wrapper feature selection
+ * Interface of evaluation method used i.a. in wrapper feature selection approaches
  */
 public interface EvaluationMethod {
   /**
