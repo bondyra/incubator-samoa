@@ -101,4 +101,80 @@ public class AlgosTest {
             .build();
     TestUtils.test(vhtConfig);
   }
+
+  @Test
+  public void testPreqBFSLocal() throws Exception {
+    TestParams bfsConfig = new TestParams.Builder()
+            .inputInstances(200_000)
+            .samplingSize(20_000)
+            .evaluationInstances(200_000)
+            .classifiedInstances(200_000)
+            .labelSamplingSize(10l)
+            .classificationsCorrect(54f)
+            .kappaStat(-1f)
+            .kappaTempStat(-1f)
+            .cliStringTemplate(TestParams.Templates.PREQEVAL_BFS_HYPERPLANE)
+            .resultFilePollTimeout(10)
+            .prePollWait(10)
+            .taskClassName(LocalDoTask.class.getName())
+            .build();
+    TestUtils.test(bfsConfig);
+  }
+
+    @Test
+    public void testPreqBWFSLocal() throws Exception {
+        TestParams bwfsConfig = new TestParams.Builder()
+                .inputInstances(200_000)
+                .samplingSize(20_000)
+                .evaluationInstances(200_000)
+                .classifiedInstances(200_000)
+                .labelSamplingSize(10l)
+                .classificationsCorrect(54f)
+                .kappaStat(-1f)
+                .kappaTempStat(-1f)
+                .cliStringTemplate(TestParams.Templates.PREQEVAL_BWFS_HYPERPLANE)
+                .resultFilePollTimeout(10)
+                .prePollWait(10)
+                .taskClassName(LocalDoTask.class.getName())
+                .build();
+        TestUtils.test(bwfsConfig);
+    }
+
+    @Test
+    public void testPreqIFSLocal() throws Exception {
+        TestParams ifsConfig = new TestParams.Builder()
+                .inputInstances(200_000)
+                .samplingSize(20_000)
+                .evaluationInstances(200_000)
+                .classifiedInstances(200_000)
+                .labelSamplingSize(10l)
+                .classificationsCorrect(50f)
+                .kappaStat(-1f)
+                .kappaTempStat(-1f)
+                .cliStringTemplate(TestParams.Templates.PREQEVAL_IFS_HYPERPLANE)
+                .resultFilePollTimeout(10)
+                .prePollWait(10)
+                .taskClassName(LocalDoTask.class.getName())
+                .build();
+        TestUtils.test(ifsConfig);
+    }
+
+    @Test
+    public void testPreqIWFSLocal() throws Exception {
+        TestParams iwfsConfig = new TestParams.Builder()
+                .inputInstances(200_000)
+                .samplingSize(20_000)
+                .evaluationInstances(200_000)
+                .classifiedInstances(200_000)
+                .labelSamplingSize(10l)
+                .classificationsCorrect(50f)
+                .kappaStat(-1f)
+                .kappaTempStat(-1f)
+                .cliStringTemplate(TestParams.Templates.PREQEVAL_IWFS_HYPERPLANE)
+                .resultFilePollTimeout(10)
+                .prePollWait(10)
+                .taskClassName(LocalDoTask.class.getName())
+                .build();
+        TestUtils.test(iwfsConfig);
+    }
 }
