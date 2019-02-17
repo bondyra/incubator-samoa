@@ -53,6 +53,9 @@ public final class VerticalHoeffdingTree implements ClassificationLearner, Adapt
 
   private static final long serialVersionUID = -4937416312929984057L;
 
+  public IntOption batchSizeOption = new IntOption("batchSize",
+      'w', "Batch size for filter processor.", 200, 0, Integer.MAX_VALUE);
+
   public ClassOption numericEstimatorOption = new ClassOption("numericEstimator",
       'n', "Numeric estimator to use.", NumericAttributeClassObserver.class,
       "GaussianNumericAttributeClassObserver");
@@ -104,6 +107,7 @@ public final class VerticalHoeffdingTree implements ClassificationLearner, Adapt
   public void init(TopologyBuilder topologyBuilder, Instances dataset, int parallelism) {
 
     this.filterProc = new FilterProcessor.Builder(dataset)
+        .batchSize(batchSizeOption.getValue())
         .build();
     topologyBuilder.addProcessor(filterProc, parallelism);
 
