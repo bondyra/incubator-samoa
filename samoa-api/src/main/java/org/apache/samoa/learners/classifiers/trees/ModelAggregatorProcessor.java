@@ -142,7 +142,7 @@ final class ModelAggregatorProcessor implements Processor {
           ActiveLearningNode leafNode = (ActiveLearningNode) foundNode.getNode();
           AttributeBatchContentEvent[] abce = leafNode.getAttributeBatchContentEvent();
           if (abce != null) {
-            for (int i = 0; i < this.dataset.numAttributes() - 1; i++) {
+            for (int i = 0; i < abce.length; i++) {
               this.sendToAttributeStream(abce[i]);
             }
           }
@@ -422,6 +422,7 @@ final class ModelAggregatorProcessor implements Processor {
 
     if (leafNode == null) {
       leafNode = newLearningNode(this.parallelismHint);
+      foundNode.setNode(leafNode);
       foundNode.getParent().setChild(foundNode.getParentBranch(), leafNode);
       activeLeafNodeCount++;
     }
